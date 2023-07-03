@@ -3,9 +3,20 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+ext {
+    appName = "MyArcade"
+    gdxVersion = '1.11.0'
+    roboVMVersion = '2.3.16'
+    box2DLightsVersion = '1.5'
+    ashleyVersion = '1.7.4'
+    aiVersion = '1.8.2'
+    gdxControllersVersion = '2.2.1'
+}
+
 android {
     namespace 'com.hotguy.myarcade'
     compileSdk 33
+    buildToolsVersion "33.0.2"
 
     defaultConfig {
         applicationId "com.hotguy.myarcade"
@@ -19,7 +30,7 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -30,10 +41,51 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['libs']
+        }
+    }
+
+    buildFeatures {
+        renderScript true
+        aidl true
+    }
 }
+
+configurations { natives }
 
 dependencies {
 
+//    LibGDX dependencies
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+//    implementation "com.badlogicgames.gdx:gdx-backend-android:$gdxVersion"
+    api "com.badlogicgames.gdx:gdx-backend-android:$gdxVersion"
+    api "com.badlogicgames.gdx:gdx:$gdxVersion"
+
+//    natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi"
+    natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi-v7a"
+    natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-arm64-v8a"
+    natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86"
+    natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86_64"
+
+//    implementation "com.badlogicgames.gdx:gdx-box2d:$gdxVersion"
+////    natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-armeabi"
+//    natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-armeabi-v7a"
+//    natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-arm64-v8a"
+//    natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-x86"
+//    natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-x86_64"
+//
+//    implementation "com.badlogicgames.gdx:gdx:$gdxVersion"
+//    implementation "com.badlogicgames.gdx:gdx-box2d:$gdxVersion"
+//
+//    implementation "com.badlogicgames.gdx:gdx-backend-lwjgl:$gdxVersion"
+//    implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+//    implementation "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-desktop"
+
+//    Android dependencies
     implementation 'androidx.core:core-ktx:1.10.1'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.9.0'
@@ -42,3 +94,55 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
+
+task copyAndroidNatives() {
+//    file("libs/armeabi/").mkdirs()
+    file("libs/armeabi-v7a/").mkdirs()
+    file("libs/arm64-v8a/").mkdirs()
+    file("libs/x86/").mkdirs()
+    file("libs/x86_64/").mkdirs()
+
+    configurations.getByName("natives").copy().files.each { jar ->
+        def outputDir = null
+        if (jar.name.endsWith("natives-armeabi-v7a.jar")) outputDir = file("libs/armeabi-v7a")
+//        if (jar.name.endsWith("natives-armeabi.jar")) outputDir = file("libs/armeabi")
+        if (jar.name.endsWith("natives-arm64-v8a.jar")) outputDir = file("libs/arm64-v8a")
+        if (jar.name.endsWith("natives-x86.jar")) outputDir = file("libs/x86")
+        if (jar.name.endsWith("natives-x86_64.jar")) outputDir = file("libs/x86_64")
+        if (outputDir != null) {
+            copy {
+                from zipTree(jar)
+                into outputDir
+                include "*.so"
+            }
+        }
+    }
+}
+
+//tasks.whenTaskAdded { packageTask ->
+//    if (packageTask.name.contains("merge") && packageTask.name.contains("JniLibFolders")) {
+//        packageTask.dependsOn 'copyAndroidNatives'
+//    }
+//}
+//
+//task run(type: Exec) {
+//    def path
+//    def localProperties = project.file("../local.properties")
+//    if (localProperties.exists()) {
+//        Properties properties = new Properties()
+//        localProperties.withInputStream { instr ->
+//            properties.load(instr)
+//        }
+//        def sdkDir = properties.getProperty('sdk.dir')
+//        if (sdkDir) {
+//            path = sdkDir
+//        } else {
+//            path = "$System.env.ANDROID_HOME"
+//        }
+//    } else {
+//        path = "$System.env.ANDROID_HOME"
+//    }
+//
+//    def adb = path + "/platform-tools/adb"
+//    commandLine "$adb", 'shell', 'am', 'start', '-n', 'com.hotguy.myarcade/com.hotguy.myarcade.MainActivity'
+//}

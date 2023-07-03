@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">MyArcade</string>
+    <string name="error_game">Error Juego</string>
 </resources>
